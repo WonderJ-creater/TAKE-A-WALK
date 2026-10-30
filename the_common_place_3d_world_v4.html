@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE COMMON PLACE — A Little World for Everyone</title>
+<style>
+:root{--ink:#293b32;--paper:#f4f0e7;--gold:#c5a879}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#b9c9c3;font-family:Arial,"Noto Sans KR",sans-serif;color:var(--ink)}
+canvas{display:block;touch-action:none}
+#loading{position:fixed;inset:0;z-index:10;display:grid;place-items:center;background:#eeeade;color:#304238;font-family:Georgia,serif;letter-spacing:.15em}
+#loading small{display:block;margin-top:12px;text-align:center;font:12px Arial;letter-spacing:.04em;color:#718075}
+#hud{position:fixed;inset:0;pointer-events:none}
+#topbar{position:absolute;top:18px;left:20px;right:20px;display:flex;justify-content:space-between;align-items:flex-start;color:white;text-shadow:0 2px 9px #26392f}
+.logo{font:13px Georgia,serif;letter-spacing:.2em}.subtitle{font:10px Arial;letter-spacing:.16em;margin-top:6px;opacity:.9}
+#place{text-align:right;font:11px/1.7 Arial;letter-spacing:.12em}
+#help{position:absolute;left:18px;bottom:18px;background:#17291fbd;color:#fff;padding:11px 14px;border:1px solid #ffffff45;border-radius:4px;font:11px/1.8 Arial;backdrop-filter:blur(8px)}
+.key{display:inline-block;min-width:21px;text-align:center;padding:0 5px;margin:0 2px;border:1px solid #ffffff80;border-radius:3px;color:#f3dfb8}
+#prompt{position:absolute;left:50%;bottom:104px;transform:translateX(-50%);padding:10px 16px;background:#1b2d23e8;color:white;border:1px solid #d8bd8a;border-radius:3px;font:12px Arial;opacity:0;transition:opacity .2s;white-space:nowrap}
+#crosshair{position:absolute;left:50%;top:50%;width:5px;height:5px;border:1px solid #ffffffb0;border-radius:50%;transform:translate(-50%,-50%);opacity:.5}
+#footer{position:absolute;right:20px;bottom:20px;color:#fff;text-shadow:0 2px 6px #17251d;font:10px Arial;letter-spacing:.14em}
+#panel{display:none;pointer-events:auto;position:absolute;inset:0;background:#1020189c;align-items:center;justify-content:center;padding:16px;overflow:auto}
+#panel.show{display:flex}
+.card{position:relative;width:min(510px,100%);max-height:min(88vh,780px);overflow:auto;background:#f4f0e7;padding:28px 28px 24px;box-shadow:0 20px 70px #0005;border-top:3px solid #b89b69}
+.eyebrow{font:10px Arial;letter-spacing:.2em;color:#788474}
+.card h2{font:30px Georgia,serif;font-weight:400;margin:10px 0}
+.card p{font:14px/1.8 Arial,sans-serif;color:#5c685f}
+.card button,.action{background:#31483a;color:white;border:0;padding:11px 16px;cursor:pointer;font-size:13px}
+#close{position:absolute;right:12px;top:10px;background:none;color:#314438;font-size:25px;padding:3px 8px}
+.field{display:block;margin:12px 0 5px;font-size:12px;color:#536156}
+.card input,.card textarea,.card select{width:100%;border:1px solid #d6d0c2;background:#fffdf8;padding:11px;font:14px Arial;color:#344238;border-radius:2px}
+.card textarea{min-height:100px;resize:vertical}
+.postcard{background:#fffdf8;border:1px solid #e1d9c9;padding:12px 14px;margin:10px 0;color:#46564a}
+.postcard small{display:block;color:#8b806c;margin-bottom:6px;font:10px Arial;letter-spacing:.08em}
+.postcard p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+#mobile{display:none;position:absolute;right:14px;bottom:14px;pointer-events:auto;gap:6px}
+#mobile button{width:43px;height:43px;border:1px solid #ffffff8a;background:#1b2d23b8;color:#fff;border-radius:5px;font-size:18px;touch-action:none}
+@media(max-width:650px){
+ #help{font-size:9px;bottom:10px;left:10px;padding:7px 9px;max-width:58vw}
+ #topbar{top:11px;left:11px;right:11px}.logo{font-size:10px}.subtitle{font-size:8px}
+ #mobile{display:grid;grid-template-columns:repeat(3,43px);grid-template-rows:repeat(2,43px)}
+ #mobile button:nth-child(1){grid-column:2}#mobile button:nth-child(2){grid-column:1;grid-row:2}#mobile button:nth-child(3){grid-column:2;grid-row:2}#mobile button:nth-child(4){grid-column:3;grid-row:2}
+ #footer{display:none}.card{padding:24px 19px 20px}.card h2{font-size:26px}
+}
+</style>
+</head>
+<body>
+<div id="loading"><div>THE COMMON PLACE<small>구름과 꽃이 있는 작은 마을을 준비하고 있어요…</small></div></div>
+<div id="hud">
+ <div id="topbar"><div><div class="logo">THE COMMON PLACE</div><div class="subtitle">A LITTLE WORLD FOR EVERYONE</div></div><div id="place">CENTRAL GARDEN<br><span id="timeLabel" style="font-size:10px;opacity:.9">AFTERNOON · 느린 오후</span></div></div>
+ <div id="crosshair"></div><div id="prompt">E 키를 눌러 둘러보기</div>
+ <div id="help"><b>천천히 산책하기</b><br><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> 이동　마우스 드래그: 시점 회전<br><span class="key">E</span> 장소 이용 / 벤치 앉기　<span class="key">ESC</span> 닫기</div>
+ <div id="footer">WALK SLOWLY · STAY A WHILE</div>
+ <div id="mobile"><button data-key="w">↑</button><button data-key="a">←</button><button data-key="s">↓</button><button data-key="d">→</button></div>
+ <div id="panel"><div class="card"><button id="close" aria-label="닫기">×</button><div class="eyebrow" id="panelEyebrow">A PLACE IN OUR WORLD</div><h2 id="panelTitle">중앙 광장</h2><div id="panelBody"></div><button id="panelDone">계속 산책하기</button></div></div>
+</div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+const loading=document.getElementById('loading');
+const scene=new THREE.Scene();
+const skyDay=new THREE.Color(0x9fc5d1), skySunset=new THREE.Color(0xc88f9c), skyNight=new THREE.Color(0x25364e), skyDawn=new THREE.Color(0xd9b6a5);
+scene.background=skyDay;scene.fog=new THREE.Fog(skyDay,58,145);
+const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.1,240);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;document.body.appendChild(renderer.domElement);
+const hemi=new THREE.HemisphereLight(0xeaf4ef,0x65745d,1.9);scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xffe2bb,2.2);sun.position.set(-24,38,18);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-62;sun.shadow.camera.right=62;sun.shadow.camera.top=62;sun.shadow.camera.bottom=-62;scene.add(sun);
+const mat=(c,r=.86)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
+const grass=mat(0x66805e), pathMat=mat(0xcfc5ae), stone=mat(0xb2ad9d), wood=mat(0x86684d), darkWood=mat(0x514235), ivory=mat(0xe8e0d1), glass= new THREE.MeshStandardMaterial({color:0x9bb8b3,roughness:.25,metalness:.08,transparent:true,opacity:.48}), leafMats=[mat(0x45694b),mat(0x59784e),mat(0x71845a)], waterMat=new THREE.MeshStandardMaterial({color:0x6b9e9e,roughness:.22,metalness:.1,transparent:true,opacity:.9});
+function add(mesh){scene.add(mesh);mesh.castShadow=true;mesh.receiveShadow=true;return mesh}
+function box(w,h,d,material,x,y,z,shadow=true){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);m.position.set(x,y,z);m.castShadow=shadow;m.receiveShadow=true;scene.add(m);return m}
+function cylinder(rt,rb,h,material,x,y,z,seg=12){const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg),material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;scene.add(m);return m}
+function sphere(r,material,x,y,z,sx=1,sy=1,sz=1){const m=new THREE.Mesh(new THREE.SphereGeometry(r,12,10),material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;scene.add(m);return m}
+const ground=add(new THREE.Mesh(new THREE.PlaneGeometry(150,150),grass));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;
+// Soft distant hills and mountain silhouettes
+const mountainMat=mat(0x718879), farMountain=mat(0x8da49a), hillMat=mat(0x7f9874);
+for(let i=0;i<9;i++){const x=-58+i*14;const m=new THREE.Mesh(new THREE.ConeGeometry(10+(i%3)*3,18+(i%4)*3,5),i%2?mountainMat:farMountain);m.position.set(x,7,-66-(i%2)*5);m.rotation.y=i*.31;scene.add(m)}
+for(let i=0;i<7;i++){const h=sphere(11,hillMat,-62+i*19,1,-47+(i%3)*8,1.8,.65,1.2);h.castShadow=false}
+// distant sea on eastern edge, with pale beach strip
+const seaMat=new THREE.MeshStandardMaterial({color:0x63979a,roughness:.3,metalness:.12});
+const sea=add(new THREE.Mesh(new THREE.PlaneGeometry(52,88),seaMat));sea.rotation.x=-Math.PI/2;sea.position.set(66,.015,4);
+const beach=add(new THREE.Mesh(new THREE.PlaneGeometry(5,88),mat(0xd6c8a8)));beach.rotation.x=-Math.PI/2;beach.position.set(39,.025,4);
+// paths
+function pathSeg(x,z,w,d,rot=0){const m=box(w,.07,d,pathMat,x,.035,z,false);m.rotation.y=rot}
+pathSeg(0,-2,5,62);pathSeg(-2,0,48,4);pathSeg(0,17,4,26);pathSeg(-17,-2,4,25);pathSeg(16,-2,4,25);pathSeg(0,-22,4,18);pathSeg(-23,16,4,22,.2);pathSeg(18,16,4,18,-.2);
+// pond
+const pond=new THREE.Mesh(new THREE.CircleGeometry(8,48),waterMat);pond.rotation.x=-Math.PI/2;pond.position.set(17,.07,-10);pond.scale.set(1.25,.82,1);scene.add(pond);
+const rim=new THREE.Mesh(new THREE.RingGeometry(7.8,8.45,48),stone);rim.rotation.x=-Math.PI/2;rim.position.set(17,.08,-10);rim.scale.set(1.25,.82,1);scene.add(rim);
+// Building shells with an open central doorway and visible calm interiors
+function building(x,z,w,d,label,wall=0xe8e0d1,roofColor=0x655744){
+ const wallMat=mat(wall), roofMat=mat(roofColor), front=z+d/2;
+ box(w,.22,d,mat(0xb9aa91),x,.11,z);
+ box(.32,4.1,d,wallMat,x-w/2+.16,2.15,z);box(.32,4.1,d,wallMat,x+w/2-.16,2.15,z);
+ box(w,4.1,.32,wallMat,x,2.15,z-d/2+.16);
+ const opening=2.3, side=(w-opening)/2;
+ box(side,3.35,.32,wallMat,x-w/2+side/2,1.78,front-.16);
+ box(side,3.35,.32,wallMat,x+w/2-side/2,1.78,front-.16);
+ box(opening,.55,.34,wallMat,x,3.85,front-.16);
+ // open door leaves folded against inner sides
+ box(.10,3,.12,wood,x-opening/2+.1,1.55,front-.42);box(.10,3,.12,wood,x+opening/2-.1,1.55,front-.42);
+ const roof=new THREE.Mesh(new THREE.ConeGeometry(w*.78,2.25,4),roofMat);roof.position.set(x,5.35,z);roof.rotation.y=Math.PI/4;roof.scale.z=d/w;add(roof);
+ // interior floor rug, counter/bookshelf, warm lamps
+ box(w*.55,.06,d*.55,mat(0xc5ad8d),x,.25,z-.1,false);
+ box(w*.42,.75,.55,wood,x,1.0,z-.7);
+ box(w*.34,.08,.62,ivory,x,1.42,z-.7);
+ for(let i=0;i<4;i++)box(.16,.55,.12,mat([0x9b7655,0x71806c,0xb49b78,0x8a6555][i]),x-w*.28+i*.22,1.25,z-d*.32);
+ // windows on side walls
+ for(const sideX of [-1,1]){const wx=x+sideX*(w/2+.015);const win=box(.06,1.45,2.0,glass,wx,2.55,z-.2,false);box(.08,.09,2.1,wood,wx,1.78,z-.2);box(.08,.09,2.1,wood,wx,3.31,z-.2)}
+ // sign board over entrance
+ box(w*.36,.48,.16,wood,x,4.25,front+.02);
+ return {x,z,w,d,front};
+}
+const library=building(0,-31,19,12,'OPEN LIBRARY',0xe3ddcf,0x59634f);
+box(5,.22,.45,darkWood,0,.13,-23.9);for(let i=0;i<4;i++)box(9-i*.5,.2,.65,stone,0,.12+i*.01,-23+i*.7);
+const post=building(18,22,10,8,'LITTLE POST',0xe9dfcd,0x765b43);
+const cafe=building(-27,19,11,9,'THE LITTLE CAFE',0xece6d9,0x6b5948);
+// Café terrace, tables and chairs
+function tableSet(x,z){cylinder(.07,.07,.9,darkWood,x,.78,z);cylinder(.78,.78,.12,wood,x,1.22,z,20);for(const a of [0,Math.PI/2,Math.PI,Math.PI*1.5]){const cx=x+Math.cos(a)*1.05,cz=z+Math.sin(a)*1.05;box(.42,.12,.42,wood,cx,.55,cz);cylinder(.045,.05,.55,darkWood,cx,.28,cz)}}
+tableSet(-33,26);tableSet(-22,27);tableSet(-27,31);
+// Café sign
+box(4.4,.65,.16,darkWood,-27,4.45,23.65);
+// Post office red postbox outside, with cap, slot and plaque
+const red=mat(0xa9342d,.55), redDark=mat(0x782721,.6);
+box(.95,1.8,.82,red,14.8,1.05,27.5);const postCap=new THREE.Mesh(new THREE.CylinderGeometry(.48,.48,.25,16),red);postCap.position.set(14.8,2.05,27.5);scene.add(postCap);
+box(.48,.10,.035,redDark,14.8,1.55,27.09);box(.5,.28,.04,mat(0xe5d7bd),14.8,.8,27.08);
+box(1.8,.1,.1,wood,14.8,.08,26.7);
+// Pavilion
+for(const [x,z] of [[-18,-7],[-12,-7],[-18,-1],[-12,-1]])cylinder(.18,.23,4,wood,x,2,z);
+const gazeboRoof=new THREE.Mesh(new THREE.ConeGeometry(5,2.1,4),mat(0x66513d));gazeboRoof.position.set(-15,4.8,-4);gazeboRoof.rotation.y=Math.PI/4;add(gazeboRoof);box(5,.35,.8,wood,-15,.65,-4);
+// Benches — ten quiet resting spots around the village
+const benches=[];
+function bench(x,z,rot=0){
+ const g=new THREE.Group();
+ const seat=new THREE.Mesh(new THREE.BoxGeometry(2.5,.18,.65),wood);seat.position.y=.85;g.add(seat);
+ for(const xx of [-.9,.9]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.16,.85,.5),darkWood);leg.position.set(xx,.42,0);g.add(leg)}
+ const back=new THREE.Mesh(new THREE.BoxGeometry(2.5,.9,.14),wood);back.position.set(0,1.35,-.28);g.add(back);
+ g.position.set(x,0,z);g.rotation.y=rot;
+ g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+ scene.add(g);benches.push({x,z,rot,g});
+}
+// Lakeside benches are placed fully outside the water and face inward toward the pond.
+bench(17,-19,0);          // north bank, faces south toward the water
+bench(29.5,-10,-Math.PI/2); // east bank, faces west
+bench(4.5,-10,Math.PI/2);   // west bank, faces east
+bench(17,-1,Math.PI);       // south bank, faces north
+// Other quiet resting spots around the library, pavilion, flower path and sea walk.
+bench(-5,2,.2);bench(-15,4,Math.PI/2);bench(-35,13,Math.PI/2);
+bench(-8,-25,0);bench(-31,-8,Math.PI/2);bench(34,17,Math.PI/2);
+// Trees and osmanthus
+function tree(x,z,s=1,variant=0){cylinder(.22*s,.38*s,3.3*s,mat(0x68523c),x,1.65*s,z,9);for(let i=0;i<3;i++){const r=(2-i*.25)*s;const crown=new THREE.Mesh(new THREE.SphereGeometry(r,12,10),leafMats[(variant+i)%3]);crown.position.set(x+(i-1)*.25*s,3.3*s+i*.85*s,z+(i%2)*.2*s);crown.scale.set(1,.9,1);add(crown)}}
+for(let i=0;i<34;i++){let x,z;do{x=(Math.random()-.5)*96;z=(Math.random()-.5)*96}while((Math.abs(x)<8&&z<8&&z>-39)||(x>5&&x<31&&z>-22&&z<2)||(x>-35&&x<-18&&z>8&&z<34)||(x>11&&z>15&&z<31));tree(x,z,.75+Math.random()*.65,i%3)}
+function shrub(x,z,scale=1,golden=false){const g=new THREE.Group();const green=golden?mat(0x526f45):leafMats[1];for(let i=0;i<5;i++){const b=new THREE.Mesh(new THREE.SphereGeometry(.48*scale,10,8),green);b.position.set((i-2)*.32*scale,.55*scale+(i%2)*.16*scale,Math.sin(i)*.18*scale);g.add(b)}if(golden){const bloom=mat(0xe7bd43);for(let i=0;i<18;i++){const a=i*2.4;const f=new THREE.Mesh(new THREE.SphereGeometry(.075*scale,7,6),bloom);f.position.set(Math.sin(a)*.68*scale,.55*scale+(i%4)*.22*scale,Math.cos(a)*.34*scale);g.add(f)}}g.position.set(x,0,z);g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});scene.add(g)}
+for(const [x,z] of [[-8,5],[-10,7],[-35,17],[-32,11],[7,14],[25,8],[28,15],[11,28],[22,29]])shrub(x,z,1.1,true);
+for(let i=0;i<28;i++){const x=(Math.random()-.5)*48,z=(Math.random()-.5)*48;if(Math.abs(x)<5&&Math.abs(z)<28)continue;shrub(x,z,.55+Math.random()*.45,false)}
+// Grass tufts and little wildflowers
+const flowerMats=[mat(0xf0e2bd),mat(0xe7c2c6),mat(0xd8d9bd),mat(0xe7d18c)];
+function grassTuft(x,z,s=1){for(let j=0;j<4;j++){const blade=new THREE.Mesh(new THREE.ConeGeometry(.045*s,.48*s,5),mat(0x58764d));blade.position.set(x+(j-1.5)*.11*s,.23*s,z+Math.sin(j)*.08*s);blade.rotation.z=(j-1.5)*.18;scene.add(blade)}}
+for(let i=0;i<420;i++){const x=(Math.random()-.5)*88,z=(Math.random()-.5)*88;if((Math.abs(x)<4&&Math.abs(z)<31)||(x>8&&x<28&&z>-20&&z<0))continue;grassTuft(x,z,.55+Math.random()*.8)}
+for(let i=0;i<230;i++){const x=(Math.random()-.5)*76,z=(Math.random()-.5)*76;if((Math.abs(x)<4&&Math.abs(z)<30)||(x>8&&x<29&&z>-20&&z<0))continue;const c=flowerMats[i%4];cylinder(.018,.025,.25,mat(0x58734e),x,.125,z,5);sphere(.105,c,x,.28,z,.85,.7,.85);for(let j=0;j<4;j++)sphere(.055,c,x+Math.cos(j*Math.PI/2)*.09,.29,z+Math.sin(j*Math.PI/2)*.09,.9,.7,.9)}
+// Clouds made from soft clusters; drift slowly
+const cloudMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:1,transparent:true,opacity:.88});
+const clouds=[];
+for(let i=0;i<11;i++){const g=new THREE.Group();for(let j=0;j<5;j++){const c=new THREE.Mesh(new THREE.SphereGeometry(1.6+Math.random()*.8,12,9),cloudMat);c.position.set((j-2)*1.35,Math.random()*.65,Math.random()*.5);c.scale.y=.55;g.add(c)}g.position.set(-62+Math.random()*124,23+Math.random()*12,-52+Math.random()*100);scene.add(g);clouds.push(g)}
+// Duck family gently circles the pond
+const ducks=[];
+function makeDuck(x,z,scale=1){const g=new THREE.Group();const bodyMat=mat(0xf1ead9),beakMat=mat(0xd99a45),wingMat=mat(0xe2d9c8),eyeMat=mat(0x292821);const body=new THREE.Mesh(new THREE.SphereGeometry(.48,12,10),bodyMat);body.scale.set(1,.62,1.35);g.add(body);const head=new THREE.Mesh(new THREE.SphereGeometry(.25,12,10),bodyMat);head.position.set(0,.34,-.45);g.add(head);const beak=new THREE.Mesh(new THREE.ConeGeometry(.1,.28,8),beakMat);beak.rotation.x=Math.PI/2;beak.position.set(0,.29,-.72);g.add(beak);const wing=new THREE.Mesh(new THREE.SphereGeometry(.3,10,8),wingMat);wing.scale.set(.35,.55,1);wing.position.set(.32,.02,.02);g.add(wing);const eye=sphere(.035,eyeMat,0,0,0);eye.position.set(.17,.4,-.59);g.add(eye);g.scale.setScalar(scale);g.position.set(x,.18,z);scene.add(g);ducks.push({g,phase:Math.random()*Math.PI*2,scale})}
+makeDuck(17,-9,1.05);makeDuck(19,-11,.78);makeDuck(15,-12,.72);makeDuck(20,-8,.66);
+// Avatar
+const avatar=new THREE.Group();scene.add(avatar);
+const skin=mat(0xd9ad8c),shirt=mat(0x637a70),pants=mat(0x35433d),shoe=mat(0x3a332c),hair=mat(0x332b27);
+const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.38,.72,5,10),shirt);torso.position.y=1.45;avatar.add(torso);
+const head=new THREE.Mesh(new THREE.SphereGeometry(.28,16,12),skin);head.position.y=2.22;avatar.add(head);
+const haircap=new THREE.Mesh(new THREE.SphereGeometry(.29,16,10,0,Math.PI*2,0,Math.PI*.58),hair);haircap.position.set(0,2.29,-.015);avatar.add(haircap);
+const avatarLegs=[],avatarFeet=[],avatarArms=[];
+for(const x of [-.16,.16]){const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.13,.65,4,8),pants);leg.position.set(x,.55,0);avatar.add(leg);avatarLegs.push(leg);const foot=new THREE.Mesh(new THREE.BoxGeometry(.25,.13,.4),shoe);foot.position.set(x,.12,.08);avatar.add(foot);avatarFeet.push(foot)}
+for(const x of [-.48,.48]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.105,.62,4,8),shirt);arm.position.set(x,1.48,0);avatar.add(arm);avatarArms.push(arm)}
+avatar.position.set(0,0,10);avatar.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+let seated=false,activeBench=null;
+function sitOnBench(b){
+ if(seated||!b)return;
+ seated=true;activeBench=b;
+ Object.keys(keys).forEach(k=>keys[k]=false);
+ // Seat the character directly on the front half of the seat, facing the pond-facing direction.
+ const frontX=Math.sin(b.rot),frontZ=Math.cos(b.rot);
+ avatar.position.set(b.x+frontX*.28,0,b.z+frontZ*.28);
+ avatar.rotation.y=b.rot+Math.PI;
+ torso.position.y=1.20;head.position.y=1.91;haircap.position.y=1.98;
+ avatarArms.forEach((arm,i)=>{arm.position.set(i===0?-.43:.43,1.12,.02);arm.rotation.set(-.35,0,i===0?-.12:.12)});
+ avatarLegs.forEach((leg,i)=>{leg.position.set(i===0?-.16:.16,.48,.31);leg.rotation.set(-Math.PI/2,0,0)});
+ avatarFeet.forEach((foot,i)=>{foot.position.set(i===0?-.16:.16,.13,.70);foot.rotation.set(0,0,0)});
+}
+function standUp(){
+ if(!seated)return;
+ seated=false;activeBench=null;
+ torso.position.y=1.45;head.position.y=2.22;haircap.position.y=2.29;
+ avatarArms.forEach((arm,i)=>{arm.position.set(i===0?-.48:.48,1.48,0);arm.rotation.set(0,0,0)});
+ avatarLegs.forEach((leg,i)=>{leg.position.set(i===0?-.16:.16,.55,0);leg.rotation.set(0,0,0)});
+ avatarFeet.forEach((foot,i)=>{foot.position.set(i===0?-.16:.16,.12,.08);foot.rotation.set(0,0,0)});
+}
+const places=[
+{name:'중앙 광장',x:0,z:0,r:5,desc:'마을의 중심이 되는 열린 광장입니다. 나무와 벤치, 들꽃 사이에서 천천히 쉬어가세요.'},
+{name:'열린 도서관',x:0,z:-23,r:7,desc:'아이보리와 원목으로 꾸민 열린 도서관입니다. 문은 늘 열려 있고, 안쪽에는 책장과 작은 열람 공간이 있어요.'},
+{name:'호숫가 공원',x:17,z:-10,r:8,desc:'오리 가족이 물 위를 유유히 헤엄치는 호수입니다. 물가 벤치에서 산과 하늘을 바라보세요.'},
+{name:'이야기 정자',x:-15,z:-4,r:6,desc:'나무 그늘 아래에서 가벼운 대화와 작은 모임을 나누는 정자입니다.'},
+{name:'작은 우체국',x:18,z:22,r:6,kind:'post',desc:'이곳에 편지를 남겨보세요. 우체국 안쪽 책상에서 엽서를 작성하고 이 작은 마을의 게시판에 놓아둘 수 있어요.'},
+{name:'The Little Café',x:-27,z:19,r:7,kind:'cafe',desc:'호수와 정원을 산책하다 잠시 쉬어 가는 작은 카페입니다. 따뜻한 음료와 창가 자리를 골라보세요.'}
+];
+const panel=document.getElementById('panel'),body=document.getElementById('panelBody');
+function openPanel(p){document.getElementById('panelTitle').textContent=p.name;document.getElementById('panelEyebrow').textContent=p.kind==='post'?'LETTERS LEFT HERE':p.kind==='cafe'?'A QUIET CUP IN THE GARDEN':'A PLACE IN OUR WORLD';body.innerHTML='';
+ if(p.kind==='post'){
+  const intro=document.createElement('p');intro.textContent='누군가에게 보내는 편지일 수도, 이름 모를 이웃에게 남기는 짧은 인사일 수도 있어요. 마음에 담아둔 문장을 이곳에 놓아두세요.';body.append(intro);
+  const form=document.createElement('form');form.id='postcardForm';
+  form.innerHTML='<label class="field">엽서 디자인</label><select name="design"><option>금목서 정원</option><option>호수와 오리 가족</option><option>연보랏빛 노을</option><option>작은 카페</option></select><label class="field">보내는 사람 (별명도 좋아요)</label><input name="author" maxlength="24" placeholder="예: 오후의 산책자"><label class="field">엽서에 남길 메시지</label><textarea name="message" maxlength="400" required placeholder="오늘 누군가에게 전하고 싶은 말을 적어보세요."></textarea><button type="submit">우체통에 엽서 넣기</button>';
+  body.append(form);
+  const note=document.createElement('p');note.style.fontSize='11px';note.textContent='현재 버전은 이 브라우저에만 엽서를 저장합니다. 다른 방문자와 공유하려면 나중에 온라인 데이터 저장 기능을 연결해야 해요.';body.append(note);
+  const wall=document.createElement('div');wall.id='postcardWall';body.append(wall);renderPostcards();
+  form.addEventListener('submit',e=>{e.preventDefault();const fd=new FormData(form);const message=String(fd.get('message')||'').trim();if(!message)return;const cards=loadCards();cards.unshift({design:String(fd.get('design')),author:String(fd.get('author')||'').trim()||'익명의 산책자',message,date:new Date().toLocaleDateString('ko-KR')});try{localStorage.setItem('tcp_postcards',JSON.stringify(cards.slice(0,40)))}catch(err){}form.reset();renderPostcards();});
+ }else if(p.kind==='cafe'){
+  const intro=document.createElement('p');intro.textContent=p.desc;body.append(intro);
+  const menu=document.createElement('div');menu.className='postcard';menu.innerHTML='<small>THE LITTLE CAFÉ · TODAY’S MENU</small><p>아메리카노　₩3,500<br>카페라테　₩4,000<br>캐모마일 티　₩3,800<br>따뜻한 코코아　₩4,000</p>';body.append(menu);
+  const tip=document.createElement('p');tip.textContent='창가 자리에 앉아 호수와 노을을 바라보는 상상을 해보세요. 다음 단계에서는 실제 착석과 음료 선택 애니메이션을 더할 수 있어요.';body.append(tip);
+ }else{const para=document.createElement('p');para.textContent=p.desc;body.append(para)}
+ panel.classList.add('show');
+}
+function loadCards(){try{return JSON.parse(localStorage.getItem('tcp_postcards')||'[]')}catch(e){return []}}
+function renderPostcards(){const wall=document.getElementById('postcardWall');if(!wall)return;wall.innerHTML='<div class="eyebrow" style="margin:18px 0 8px">LETTERS LEFT HERE · 남겨진 엽서</div>';const cards=loadCards();if(!cards.length){const empty=document.createElement('p');empty.textContent='아직 남겨진 엽서가 없어요. 첫 번째 인사를 남겨보세요.';wall.append(empty);return}cards.slice(0,8).forEach(c=>{const el=document.createElement('div');el.className='postcard';const sm=document.createElement('small');sm.textContent=c.design+' · '+c.date+' · '+c.author;const p=document.createElement('p');p.textContent=c.message;el.append(sm,p);wall.append(el)})}
+function closePanel(){panel.classList.remove('show')}
+document.getElementById('close').onclick=closePanel;document.getElementById('panelDone').onclick=closePanel;
+const keys={};let yaw=0,dragging=false,lastX=0,lastY=0,pitch=.12;const target=new THREE.Vector3();
+window.addEventListener('keydown',e=>{
+ const k=e.key.toLowerCase();
+ if(k==='e'&&!e.repeat&&!panel.classList.contains('show')){
+  e.preventDefault();
+  if(seated){standUp();return}
+  const b=nearbyBench();
+  if(b){sitOnBench(b);return}
+  const p=nearby();if(p)openPanel(p);
+  return;
+ }
+ if(e.key==='Escape')closePanel();
+ if(!seated)keys[k]=true;
+});
+window.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+renderer.domElement.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;renderer.domElement.setPointerCapture(e.pointerId)});
+window.addEventListener('pointerup',()=>dragging=false);
+window.addEventListener('pointermove',e=>{if(!dragging)return;yaw-=(e.clientX-lastX)*.004;pitch=Math.max(-.05,Math.min(.65,pitch+(e.clientY-lastY)*.003));lastX=e.clientX;lastY=e.clientY});
+document.querySelectorAll('#mobile button').forEach(b=>{const k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true});['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false))});
+function nearby(){let best=null,dist=1e9;for(const p of places){const d=Math.hypot(avatar.position.x-p.x,avatar.position.z-p.z);if(d<p.r&&d<dist){best=p;dist=d}}return best}
+function nearbyBench(){
+ let best=null,dist=1e9;
+ for(const b of benches){
+  const d=Math.hypot(avatar.position.x-b.x,avatar.position.z-b.z);
+  if(d<3.4&&d<dist){best=b;dist=d}
+ }
+ return best;
+}
+// A slow repeating day cycle: morning -> afternoon -> sunset -> night -> morning
+const cycle=190;let elapsed=0;
+function mixColor(a,b,t){return new THREE.Color(a).lerp(new THREE.Color(b),t)}
+function dayLighting(t){
+ let sky,light,hemiI,sunI,label;
+ if(t<.25){const q=t/.25;sky=mixColor(skyDawn,skyDay,q);light=0xffd6b0;hemiI=1.7;sunI=1.65;label='MORNING · 맑은 아침'}
+ else if(t<.58){const q=(t-.25)/.33;sky=mixColor(skyDay,new THREE.Color(0xa9c6c8),q);light=0xffe4c3;hemiI=2;sunI=2.25;label='AFTERNOON · 느린 오후'}
+ else if(t<.78){const q=(t-.58)/.20;sky=mixColor(0xa9c6c8,skySunset,q);light=mixColor(0xffe4c3,0xd28b9b,q);hemiI=1.8-q*.65;sunI=2.1-q*.8;label='SUNSET · 연보랏빛 노을'}
+ else{const q=(t-.78)/.22;sky=mixColor(skySunset,skyNight,q);light=mixColor(0xd28b9b,0x9aa9c7,q);hemiI=.85;sunI=.65;label='NIGHT · 고요한 밤'}
+ scene.background.copy(sky);scene.fog.color.copy(sky);sun.color.set(light);sun.intensity=sunI;hemi.intensity=hemiI;document.getElementById('timeLabel').textContent=label;
+ sun.position.set(-24+Math.sin(t*Math.PI*2)*35,18+Math.sin(t*Math.PI*2+1)*22,18);
+}
+const clock=new THREE.Clock();let walk=0;
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);elapsed=(elapsed+dt/cycle)%1;dayLighting(elapsed);
+ clouds.forEach((c,i)=>{c.position.x+=dt*(.35+i%3*.08);if(c.position.x>75)c.position.x=-75});
+ ducks.forEach((d,i)=>{const a=elapsed*1.4+d.phase;d.g.position.x=17+Math.cos(a)*(1.8+i*.2);d.g.position.z=-10+Math.sin(a)*(1.5+i*.18);d.g.rotation.y=-a+Math.PI/2;d.g.position.y=.18+Math.sin(elapsed*14+d.phase)*.025});
+ const forward=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0),side=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),moving=forward!==0||side!==0;
+ if(moving&&!seated&&!panel.classList.contains('show')){const len=Math.hypot(forward,side),f=forward/len,s=side/len,dx=(-Math.sin(yaw)*f+Math.cos(yaw)*s)*5*dt,dz=(-Math.cos(yaw)*f-Math.sin(yaw)*s)*5*dt;avatar.position.x=THREE.MathUtils.clamp(avatar.position.x+dx,-52,52);avatar.position.z=THREE.MathUtils.clamp(avatar.position.z+dz,-52,52);avatar.rotation.y=Math.atan2(dx,dz);walk+=dt*10;avatar.position.y=Math.abs(Math.sin(walk))*.035}
+ const b=seated?null:nearbyBench(),p=nearby();
+ const prompt=document.getElementById('prompt');
+ prompt.style.opacity=(seated||b||p)?'1':'0';
+ if(seated)prompt.textContent='E 키를 눌러 일어서기';
+ else if(b)prompt.textContent='E 키를 눌러 벤치에 앉기';
+ else if(p)prompt.textContent='E 키를 눌러 '+p.name+' 이용하기';
+ else prompt.textContent='';
+ const camDist=7.5,desired=new THREE.Vector3(avatar.position.x+Math.sin(yaw)*camDist,avatar.position.y+3.2+pitch*3,avatar.position.z+Math.cos(yaw)*camDist);camera.position.lerp(desired,.12);target.set(avatar.position.x,1.45,avatar.position.z);camera.lookAt(target);renderer.render(scene,camera)}
+camera.position.set(0,5,18);loading.style.display='none';animate();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script>
+</body></html>
