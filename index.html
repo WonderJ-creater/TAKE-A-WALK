@@ -17,7 +17,8 @@ canvas{display:block;touch-action:none}
 #place{text-align:right;font:11px/1.7 Arial;letter-spacing:.12em}
 #help{position:absolute;left:18px;bottom:18px;background:#17291fbd;color:#fff;padding:11px 14px;border:1px solid #ffffff45;border-radius:4px;font:11px/1.8 Arial;backdrop-filter:blur(8px)}
 .key{display:inline-block;min-width:21px;text-align:center;padding:0 5px;margin:0 2px;border:1px solid #ffffff80;border-radius:3px;color:#f3dfb8}
-#prompt{position:absolute;left:50%;bottom:104px;transform:translateX(-50%);padding:10px 16px;background:#1b2d23e8;color:white;border:1px solid #d8bd8a;border-radius:3px;font:12px Arial;opacity:0;transition:opacity .2s;white-space:nowrap}
+#prompt{position:absolute;left:50%;bottom:104px;transform:translateX(-50%);padding:10px 16px;background:#1b2d23e8;color:white;border:1px solid #d8bd8a;border-radius:3px;font:12px Arial;opacity:0;transition:opacity .2s;white-space:nowrap;pointer-events:none;cursor:pointer}
+#prompt:focus-visible{outline:2px solid #f3dfb8;outline-offset:3px}
 #crosshair{position:absolute;left:50%;top:50%;width:5px;height:5px;border:1px solid #ffffffb0;border-radius:50%;transform:translate(-50%,-50%);opacity:.5}
 #footer{position:absolute;right:20px;bottom:20px;color:#fff;text-shadow:0 2px 6px #17251d;font:10px Arial;letter-spacing:.14em}
 #panel{display:none;pointer-events:auto;position:absolute;inset:0;background:#1020189c;align-items:center;justify-content:center;padding:16px;overflow:auto}
@@ -42,6 +43,7 @@ canvas{display:block;touch-action:none}
  #mobile{display:grid;grid-template-columns:repeat(3,43px);grid-template-rows:repeat(2,43px)}
  #mobile button:nth-child(1){grid-column:2}#mobile button:nth-child(2){grid-column:1;grid-row:2}#mobile button:nth-child(3){grid-column:2;grid-row:2}#mobile button:nth-child(4){grid-column:3;grid-row:2}
  #footer{display:none}.card{padding:24px 19px 20px}.card h2{font-size:26px}
+ #prompt{bottom:91px;max-width:calc(100vw - 150px);white-space:normal;text-align:center;line-height:1.4;padding:11px 14px;font-size:12px;pointer-events:auto;z-index:4;box-shadow:0 3px 12px #0004}
 }
 
 #joinGate{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:18px;background:#17271fc9;backdrop-filter:blur(5px)}
@@ -53,6 +55,29 @@ canvas{display:block;touch-action:none}
 #joinError{min-height:20px;color:#9b443d;font:11px/1.5 Arial;margin-top:9px}
 #onlineCount{position:fixed;top:72px;left:20px;z-index:2;color:white;text-shadow:0 1px 5px #26392f;font:10px Arial;letter-spacing:.08em;pointer-events:none}
 @media(max-width:650px){#onlineCount{top:54px;left:11px;font-size:9px}}
+
+/* THE LITTLE LIBRARY — reading room */
+#panel.library-panel .card{width:min(850px,100%);max-height:92vh;background:#eee7d8;padding:30px 30px 24px}
+.library-intro{max-width:650px;margin:0 auto 18px}
+.library-shelves{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin:18px 0}
+.library-book{display:flex;align-items:center;gap:10px;text-align:left;width:100%;min-height:76px;padding:10px;background:#fffaf0;border:1px solid #d9cdb8;color:#354538;cursor:pointer}
+.library-book .spine{width:13px;height:53px;flex:0 0 13px;background:var(--book-color,#8a6652);box-shadow:inset 2px 0 #ffffff44}
+.library-book strong{display:block;font:14px Georgia,serif;font-weight:400;margin-bottom:5px}
+.library-book small{display:block;font:10px/1.5 Arial;color:#827866}
+.reader{background:#d9cfbb;padding:18px;margin:12px 0 16px;box-shadow:inset 0 0 0 1px #c4b69d}
+.reader-title{text-align:center;font:11px Arial;letter-spacing:.16em;color:#76694f;margin:0 0 12px}
+.reader-spread{display:grid;grid-template-columns:1fr 1fr;gap:3px;min-height:270px;box-shadow:0 8px 22px #4b3b2830}
+.reader-page{background:#fffaf0;padding:24px 22px;color:#514a3c;font:14px/1.95 Georgia,'Noto Serif KR',serif;white-space:pre-line;overflow-wrap:anywhere}
+.reader-page:first-child{border-right:1px solid #e2d7c5}
+.reader-page .page-no{display:block;text-align:center;margin-top:18px;color:#a79a83;font:10px Arial}
+.reader-controls{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:14px}
+.reader-controls button,.library-back{background:#354b3c;color:#fff;border:0;padding:10px 14px;cursor:pointer;font-size:12px}
+.reader-controls button:disabled{opacity:.35;cursor:default}
+.reader-controls span{font:11px Arial;color:#756b59}
+.library-note{font:11px/1.7 Arial;color:#7b725f;margin-top:12px}
+@media(max-width:650px){#panel.library-panel .card{padding:24px 15px 18px}.reader{padding:8px}.reader-spread{min-height:240px}.reader-page{padding:15px 12px;font-size:12px;line-height:1.8}}
+@media(max-width:390px){.reader-spread{grid-template-columns:1fr}.reader-page:first-child{border-right:0;border-bottom:1px solid #e2d7c5}.reader-page{min-height:150px}}
+
 </style>
 </head>
 <body>
@@ -72,7 +97,7 @@ canvas{display:block;touch-action:none}
 <div id="onlineCount">CONNECTING TO THE VILLAGE…</div>
 <div id="hud">
  <div id="topbar"><div><div class="logo">THE COMMON PLACE</div><div class="subtitle">A LITTLE WORLD FOR EVERYONE</div></div><div id="place">CENTRAL GARDEN<br><span id="timeLabel" style="font-size:10px;opacity:.9">AFTERNOON · 느린 오후</span></div></div>
- <div id="crosshair"></div><div id="prompt">E 키를 눌러 둘러보기</div>
+ <div id="crosshair"></div><button id="prompt" type="button" aria-label="가까운 장소 이용하기">E 키를 눌러 둘러보기</button>
  <div id="help"><b>천천히 산책하기</b><br><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> 이동　마우스 드래그: 시점 회전<br><span class="key">E</span> 장소 이용 / 벤치 앉기　<span class="key">ESC</span> 닫기</div>
  <div id="footer">WALK SLOWLY · STAY A WHILE</div>
  <div id="mobile"><button data-key="w">↑</button><button data-key="a">←</button><button data-key="s">↓</button><button data-key="d">→</button></div>
@@ -153,6 +178,23 @@ function building(x,z,w,d,label,wall=0xe8e0d1,roofColor=0x655744){
  return {x,z,w,d,front};
 }
 const library=building(0,-31,19,12,'OPEN LIBRARY',0xe3ddcf,0x59634f);
+// Warm wooden bookcases along the library's back wall, with colorful book spines.
+function libraryBookcase(cx,cz,width=4.6){
+ box(width,3.35,.34,darkWood,cx,1.95,cz);
+ for(const y of [.62,1.42,2.22,3.02])box(width-.18,.10,.48,wood,cx,y,cz+.27);
+ const colors=[0x8a6250,0x65765f,0xb08d5c,0x596b78,0x9a7966,0x777052,0xa66e59,0x6f806e];
+ for(let row=0;row<3;row++){
+  let x=cx-width/2+.22;
+  while(x<cx+width/2-.28){
+   const bw=.17+((Math.floor((x+20)*13+row*7)%4)*.025);
+   const bh=.48+((Math.floor((x+15)*9+row*5)%4)*.07);
+   const book=box(bw,bh,.28,mat(colors[Math.abs(Math.floor(x*7+row*3))%colors.length]),x,.68+row*.8+bh/2,cz+.22,false);
+   book.rotation.z=((Math.floor(x*11+row)%3)-1)*.035;
+   x+=bw+.045;
+  }
+ }
+}
+libraryBookcase(-6.1,-36.05,4.5);libraryBookcase(0,-36.05,4.5);libraryBookcase(6.1,-36.05,4.5);
 box(5,.22,.45,darkWood,0,.13,-23.9);for(let i=0;i<4;i++)box(9-i*.5,.2,.65,stone,0,.12+i*.01,-23+i*.7);
 const post=building(18,22,10,8,'LITTLE POST',0xe9dfcd,0x765b43);
 const cafe=building(-27,19,11,9,'THE LITTLE CAFE',0xece6d9,0x6b5948);
@@ -241,15 +283,79 @@ function standUp(){
 }
 const places=[
 {name:'중앙 광장',x:0,z:0,r:5,desc:'마을의 중심이 되는 열린 광장입니다. 나무와 벤치, 들꽃 사이에서 천천히 쉬어가세요.'},
-{name:'열린 도서관',x:0,z:-23,r:7,desc:'아이보리와 원목으로 꾸민 열린 도서관입니다. 문은 늘 열려 있고, 안쪽에는 책장과 작은 열람 공간이 있어요.'},
+{name:'The Little Library',x:0,z:-23,r:7,kind:'library',desc:'아이보리와 원목으로 꾸민 작은 서재입니다. 책장을 둘러보고 마음에 드는 책을 펼쳐보세요.'},
 {name:'호숫가 공원',x:17,z:-10,r:8,desc:'오리 가족이 물 위를 유유히 헤엄치는 호수입니다. 물가 벤치에서 산과 하늘을 바라보세요.'},
 {name:'이야기 정자',x:-15,z:-4,r:6,desc:'나무 그늘 아래에서 가벼운 대화와 작은 모임을 나누는 정자입니다.'},
 {name:'작은 우체국',x:18,z:22,r:6,kind:'post',desc:'이곳에 편지를 남겨보세요. 우체국 안쪽 책상에서 엽서를 작성하고 이 작은 마을의 게시판에 놓아둘 수 있어요.'},
 {name:'The Little Café',x:-27,z:19,r:7,kind:'cafe',desc:'호수와 정원을 산책하다 잠시 쉬어 가는 작은 카페입니다. 따뜻한 음료와 창가 자리를 골라보세요.'}
 ];
 const panel=document.getElementById('panel'),body=document.getElementById('panelBody');
+const libraryBooks=[
+ {id:'alice',category:'고전 문학',title:'이상한 나라의 앨리스',author:'루이스 캐럴',color:'#7c8060',pages:[
+  '어느 따뜻한 오후, 앨리스는 언니 곁에 앉아 있었어요. 책에는 그림도 대화도 없었지요.\n\n앨리스는 조금 지루해졌습니다. 바로 그때, 분홍빛 눈을 가진 흰 토끼 한 마리가 종종걸음으로 지나갔어요. 토끼는 조끼 주머니에서 시계를 꺼내 보며 중얼거렸습니다.\n\n“아이고, 늦겠어!”',
+  '앨리스는 벌떡 일어나 토끼를 따라갔습니다. 토끼는 풀숲 사이 작은 굴로 쏙 들어갔고, 앨리스도 그 뒤를 따라 몸을 숙였어요.\n\n굴은 처음에는 평범했지만, 곧 깊고 낯선 통로로 이어졌습니다. 앨리스는 자신이 어디로 가는지도 모른 채 아래로, 아래로 내려갔어요.\n\n그곳에는 지금까지 알던 세상과는 조금 다른 모험이 기다리고 있었습니다.',
+  '이 이야기는 호기심 하나가 얼마나 먼 곳까지 우리를 데려갈 수 있는지 보여줍니다.\n\n낯선 곳에 도착했을 때 꼭 서둘러 답을 찾을 필요는 없어요. 때로는 주변을 천천히 살펴보는 것만으로도 새로운 세계가 열리니까요.\n\n— 작품의 첫 장면을 바탕으로 새롭게 정리한 소개 글 —'
+ ]},
+ {id:'aesop',category:'고전 우화',title:'북풍과 태양',author:'이솝 우화 · 새로 옮김',color:'#b18a55',pages:[
+  '어느 날 북풍과 태양은 누가 더 힘이 센지 이야기하다가 길을 걷는 나그네를 발견했습니다.\n\n두 친구는 나그네의 외투를 먼저 벗기는 쪽이 이기는 것으로 내기를 했어요.\n\n북풍이 먼저 나섰습니다. 세찬 바람을 몰아쳐 외투를 날려 버리려 했지요.',
+  '하지만 바람이 거세질수록 나그네는 외투를 더욱 단단히 여몄습니다.\n\n이번에는 태양이 조용히 따뜻한 빛을 비추었습니다. 나그네는 조금씩 몸이 따뜻해지자 스스로 외투를 벗었어요.\n\n두 친구는 알게 되었습니다. 강한 힘만이 언제나 가장 좋은 방법은 아니라는 것을요.',
+  '작은 생각\n\n다정함은 억지로 문을 열지 않습니다. 마음이 편안해질 때까지 기다려 주고, 스스로 열 수 있도록 따뜻한 자리를 내어 줍니다.\n\n오늘 누군가에게 건넬 수 있는 가장 부드러운 말은 무엇일까요?'
+ ]},
+ {id:'poem',category:'시의 방',title:'창가의 오후',author:'THE COMMON PLACE · 창작시',color:'#8b7185',pages:[
+  '창가의 오후\n\n햇살은 책장 위에\n느린 문장을 내려놓고\n\n바람은 읽다 만 페이지를\n살며시 넘긴다',
+  '아무 일도 일어나지 않는 날에도\n마음은 조금씩 자라고\n\n창밖의 나무는\n오늘도 제 속도로\n초록을 펼친다\n\n— THE COMMON PLACE —',
+  '시를 읽는 작은 방법\n\n마음에 드는 한 줄을 골라 천천히 다시 읽어보세요. 그 문장이 오늘의 기분과 어떻게 만나는지 잠시 생각해도 좋습니다.'
+ ]},
+ {id:'essay',category:'짧은 에세이',title:'천천히 걷는 연습',author:'마을의 작은 기록',color:'#718477',pages:[
+  '우리는 목적지에 도착하는 일을 너무 자주 서두릅니다. 산책길에서도 가장 빠른 길을 찾고, 쉬는 시간에도 무언가를 해내려 하지요.\n\n하지만 길가의 작은 꽃은 도착 시간을 묻지 않습니다. 그저 햇빛이 드는 만큼 피어 있을 뿐입니다.',
+  '오늘은 걸음을 조금 늦춰 봅니다. 나뭇잎이 흔들리는 소리, 멀리서 들리는 새소리, 따뜻한 찻잔의 온도를 알아차려 봅니다.\n\n아무것도 이루지 않아도 괜찮은 시간이 하루에 조금쯤은 있어도 좋겠습니다.'
+ ]},
+ {id:'stories',category:'창작 서재',title:'호숫가 우체통',author:'마을 창작 이야기',color:'#9b6b58',pages:[
+  '호숫가에는 작은 빨간 우체통이 하나 있었습니다. 우체통은 매일 산책자들의 편지를 기다렸어요. 어떤 편지는 먼 친구에게, 어떤 편지는 아직 만나지 못한 이웃에게 보내는 것이었습니다.\n\n어느 저녁, 이름이 적히지 않은 엽서 한 장이 들어왔습니다.',
+  '“오늘 이곳에 잠시 머물렀어요. 아무도 제게 말을 걸지 않았지만, 창가의 불빛과 호수의 잔물결 덕분에 마음이 편안해졌습니다. 고맙습니다.”\n\n우체통은 그 엽서를 가장 잘 보이는 곳에 놓아두었습니다. 다음 날 누군가 그 글을 읽고 조용히 미소 지었지요.'
+ ]}
+];
+let currentBook=null,currentSpread=0;
+function showLibraryShelves(){
+ body.innerHTML='';
+ const intro=document.createElement('p');intro.className='library-intro';intro.textContent='책을 고르지 않아도 괜찮아요. 잠시 책장 사이를 거닐다가 마음이 머무는 제목을 골라보세요.';body.append(intro);
+ const groups=[...new Set(libraryBooks.map(b=>b.category))];
+ for(const group of groups){
+  const heading=document.createElement('div');heading.className='eyebrow';heading.style.margin='18px 0 8px';heading.textContent=group;body.append(heading);
+  const shelf=document.createElement('div');shelf.className='library-shelves';
+  libraryBooks.filter(b=>b.category===group).forEach(book=>{
+   const btn=document.createElement('button');btn.className='library-book';btn.type='button';btn.style.setProperty('--book-color',book.color);
+   const spine=document.createElement('span');spine.className='spine';
+   const info=document.createElement('span');const title=document.createElement('strong');title.textContent=book.title;const author=document.createElement('small');author.textContent=book.author;info.append(title,author);btn.append(spine,info);
+   btn.addEventListener('click',()=>openReader(book.id));shelf.append(btn);
+  });body.append(shelf);
+ }
+ const note=document.createElement('p');note.className='library-note';note.textContent='이 서재의 첫 책들은 공개 도메인 작품을 바탕으로 새롭게 요약하거나 직접 쓴 글로 구성했어요. 앞으로 책과 시를 더해갈 수 있습니다.';body.append(note);
+}
+function openReader(id){currentBook=libraryBooks.find(b=>b.id===id);currentSpread=0;renderReader()}
+function renderReader(){
+ if(!currentBook)return;body.innerHTML='';
+ const back=document.createElement('button');back.className='library-back';back.textContent='← 책장으로';back.onclick=()=>{currentBook=null;showLibraryShelves()};body.append(back);
+ const title=document.createElement('div');title.className='reader-title';title.style.marginTop='16px';title.textContent=currentBook.title+' · '+currentBook.author;body.append(title);
+ const reader=document.createElement('div');reader.className='reader';
+ const spread=document.createElement('div');spread.className='reader-spread';
+ for(let side=0;side<2;side++){
+  const page=document.createElement('div');page.className='reader-page';const idx=currentSpread*2+side;
+  if(currentBook.pages[idx]){page.textContent=currentBook.pages[idx]}else{page.textContent='아직 비어 있는 페이지입니다.\n\n이 서재에는 앞으로 더 많은 이야기와 시가 찾아올 거예요.'}
+  const no=document.createElement('span');no.className='page-no';no.textContent=String(idx+1);page.append(no);spread.append(page);
+ }
+ reader.append(spread);body.append(reader);
+ const controls=document.createElement('div');controls.className='reader-controls';
+ const prev=document.createElement('button');prev.textContent='← 이전';prev.disabled=currentSpread===0;prev.onclick=()=>{currentSpread--;renderReader()};
+ const count=document.createElement('span');count.textContent=`${currentSpread+1} / ${Math.ceil(currentBook.pages.length/2)} 펼침`;
+ const next=document.createElement('button');next.textContent='다음 →';next.disabled=(currentSpread+1)*2>=currentBook.pages.length;next.onclick=()=>{currentSpread++;renderReader()};
+ controls.append(prev,count,next);body.append(controls);
+}
 function openPanel(p){document.getElementById('panelTitle').textContent=p.name;document.getElementById('panelEyebrow').textContent=p.kind==='post'?'LETTERS LEFT HERE':p.kind==='cafe'?'A QUIET CUP IN THE GARDEN':'A PLACE IN OUR WORLD';body.innerHTML='';
- if(p.kind==='post'){
+ if(p.kind==='library'){
+  panel.classList.add('library-panel');showLibraryShelves();
+ }else if(p.kind==='post'){
+  panel.classList.remove('library-panel');
   const intro=document.createElement('p');intro.textContent='누군가에게 보내는 편지일 수도, 이름 모를 이웃에게 남기는 짧은 인사일 수도 있어요. 마음에 담아둔 문장을 이곳에 놓아두세요.';body.append(intro);
   const form=document.createElement('form');form.id='postcardForm';
   form.innerHTML='<label class="field">엽서 디자인</label><select name="design"><option>금목서 정원</option><option>호수와 오리 가족</option><option>연보랏빛 노을</option><option>작은 카페</option></select><label class="field">보내는 사람 (별명도 좋아요)</label><input name="author" maxlength="24" placeholder="예: 오후의 산책자"><label class="field">엽서에 남길 메시지</label><textarea name="message" maxlength="400" required placeholder="오늘 누군가에게 전하고 싶은 말을 적어보세요."></textarea><button type="submit">우체통에 엽서 넣기</button>';
@@ -258,15 +364,16 @@ function openPanel(p){document.getElementById('panelTitle').textContent=p.name;d
   const wall=document.createElement('div');wall.id='postcardWall';body.append(wall);renderPostcards();
   form.addEventListener('submit',e=>{e.preventDefault();const fd=new FormData(form);const message=String(fd.get('message')||'').trim();if(!message)return;const cards=loadCards();cards.unshift({design:String(fd.get('design')),author:String(fd.get('author')||'').trim()||'익명의 산책자',message,date:new Date().toLocaleDateString('ko-KR')});try{localStorage.setItem('tcp_postcards',JSON.stringify(cards.slice(0,40)))}catch(err){}form.reset();renderPostcards();});
  }else if(p.kind==='cafe'){
+  panel.classList.remove('library-panel');
   const intro=document.createElement('p');intro.textContent=p.desc;body.append(intro);
   const menu=document.createElement('div');menu.className='postcard';menu.innerHTML='<small>THE LITTLE CAFÉ · TODAY’S MENU</small><p>아메리카노　₩3,500<br>카페라테　₩4,000<br>캐모마일 티　₩3,800<br>따뜻한 코코아　₩4,000</p>';body.append(menu);
   const tip=document.createElement('p');tip.textContent='창가 자리에 앉아 호수와 노을을 바라보는 상상을 해보세요. 다음 단계에서는 실제 착석과 음료 선택 애니메이션을 더할 수 있어요.';body.append(tip);
- }else{const para=document.createElement('p');para.textContent=p.desc;body.append(para)}
+ }else{panel.classList.remove('library-panel');const para=document.createElement('p');para.textContent=p.desc;body.append(para)}
  panel.classList.add('show');
 }
 function loadCards(){try{return JSON.parse(localStorage.getItem('tcp_postcards')||'[]')}catch(e){return []}}
 function renderPostcards(){const wall=document.getElementById('postcardWall');if(!wall)return;wall.innerHTML='<div class="eyebrow" style="margin:18px 0 8px">LETTERS LEFT HERE · 남겨진 엽서</div>';const cards=loadCards();if(!cards.length){const empty=document.createElement('p');empty.textContent='아직 남겨진 엽서가 없어요. 첫 번째 인사를 남겨보세요.';wall.append(empty);return}cards.slice(0,8).forEach(c=>{const el=document.createElement('div');el.className='postcard';const sm=document.createElement('small');sm.textContent=c.design+' · '+c.date+' · '+c.author;const p=document.createElement('p');p.textContent=c.message;el.append(sm,p);wall.append(el)})}
-function closePanel(){panel.classList.remove('show')}
+function closePanel(){panel.classList.remove('show','library-panel');currentBook=null}
 document.getElementById('close').onclick=closePanel;document.getElementById('panelDone').onclick=closePanel;
 
 const keys={};let yaw=0,dragging=false,lastX=0,lastY=0,pitch=.12;const target=new THREE.Vector3();
@@ -403,15 +510,19 @@ function smoothRemoteVisitors(){
   }
 }
 
+function interactNearby(){
+ if(panel.classList.contains('show'))return;
+ if(seated){standUp();return}
+ const b=nearbyBench();
+ if(b){sitOnBench(b);return}
+ const p=nearby();if(p)openPanel(p);
+}
+const interactionPrompt=document.getElementById('prompt');
+interactionPrompt.addEventListener('click',interactNearby);
 window.addEventListener('keydown',e=>{
  const k=e.key.toLowerCase();
  if(k==='e'&&!e.repeat&&!panel.classList.contains('show')){
-  e.preventDefault();
-  if(seated){standUp();return}
-  const b=nearbyBench();
-  if(b){sitOnBench(b);return}
-  const p=nearby();if(p)openPanel(p);
-  return;
+  e.preventDefault();interactNearby();return;
  }
  if(e.key==='Escape')closePanel();
  if(!seated)keys[k]=true;
@@ -450,11 +561,14 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
  if(moving&&!seated&&!panel.classList.contains('show')){const len=Math.hypot(forward,side),f=forward/len,s=side/len,dx=(-Math.sin(yaw)*f+Math.cos(yaw)*s)*5*dt,dz=(-Math.cos(yaw)*f-Math.sin(yaw)*s)*5*dt;avatar.position.x=THREE.MathUtils.clamp(avatar.position.x+dx,-52,52);avatar.position.z=THREE.MathUtils.clamp(avatar.position.z+dz,-52,52);avatar.rotation.y=Math.atan2(dx,dz);walk+=dt*10;avatar.position.y=Math.abs(Math.sin(walk))*.035}
  publishPresence(performance.now());smoothRemoteVisitors();
   const b=seated?null:nearbyBench(),p=nearby();
- const prompt=document.getElementById('prompt');
- prompt.style.opacity=(seated||b||p)?'1':'0';
- if(seated)prompt.textContent='E 키를 눌러 일어서기';
- else if(b)prompt.textContent='E 키를 눌러 벤치에 앉기';
- else if(p)prompt.textContent='E 키를 눌러 '+p.name+' 이용하기';
+ const prompt=interactionPrompt;
+ const canInteract=seated||b||p;
+ prompt.style.opacity=canInteract?'1':'0';
+ prompt.style.visibility=canInteract?'visible':'hidden';
+ const mobileMode=matchMedia('(max-width:650px)').matches;
+ if(seated)prompt.textContent=mobileMode?'탭하여 일어서기':'E 키를 눌러 일어서기';
+ else if(b)prompt.textContent=mobileMode?'탭하여 벤치에 앉기':'E 키를 눌러 벤치에 앉기';
+ else if(p)prompt.textContent=mobileMode?'탭하여 '+p.name+' 이용하기':'E 키를 눌러 '+p.name+' 이용하기';
  else prompt.textContent='';
  const camDist=7.5,desired=new THREE.Vector3(avatar.position.x+Math.sin(yaw)*camDist,avatar.position.y+3.2+pitch*3,avatar.position.z+Math.cos(yaw)*camDist);camera.position.lerp(desired,.12);target.set(avatar.position.x,1.45,avatar.position.z);camera.lookAt(target);renderer.render(scene,camera)}
 camera.position.set(0,5,18);loading.style.display='none';animate();
