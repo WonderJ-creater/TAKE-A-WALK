@@ -43,10 +43,33 @@ canvas{display:block;touch-action:none}
  #mobile button:nth-child(1){grid-column:2}#mobile button:nth-child(2){grid-column:1;grid-row:2}#mobile button:nth-child(3){grid-column:2;grid-row:2}#mobile button:nth-child(4){grid-column:3;grid-row:2}
  #footer{display:none}.card{padding:24px 19px 20px}.card h2{font-size:26px}
 }
+
+#joinGate{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:18px;background:#17271fc9;backdrop-filter:blur(5px)}
+#joinGate .joinCard{width:min(390px,100%);padding:30px 26px;background:#f4f0e7;border-top:3px solid #b89b69;box-shadow:0 20px 70px #0005;text-align:center}
+#joinGate h1{font:22px Georgia,serif;font-weight:400;letter-spacing:.08em;margin:8px 0 12px;color:#304238}
+#joinGate p{font:13px/1.7 Arial,sans-serif;color:#667267}
+#joinGate input{width:100%;padding:12px;border:1px solid #d6d0c2;background:#fffdf8;font:14px Arial;color:#344238;margin:10px 0}
+#joinGate button{width:100%;padding:12px;border:0;background:#31483a;color:#fff;font-size:13px;cursor:pointer}
+#joinError{min-height:20px;color:#9b443d;font:11px/1.5 Arial;margin-top:9px}
+#onlineCount{position:fixed;top:72px;left:20px;z-index:2;color:white;text-shadow:0 1px 5px #26392f;font:10px Arial;letter-spacing:.08em;pointer-events:none}
+@media(max-width:650px){#onlineCount{top:54px;left:11px;font-size:9px}}
 </style>
 </head>
 <body>
 <div id="loading"><div>THE COMMON PLACE<small>구름과 꽃이 있는 작은 마을을 준비하고 있어요…</small></div></div>
+
+<div id="joinGate">
+  <div class="joinCard">
+    <div class="eyebrow">WELCOME TO OUR LITTLE WORLD</div>
+    <h1>THE COMMON PLACE</h1>
+    <p>이 작은 마을에 오신 걸 환영해요.<br>다른 산책자들과 조용히 같은 공간을 거닐 수 있어요.</p>
+    <label class="field" for="nicknameInput">마을에서 사용할 별명</label>
+    <input id="nicknameInput" maxlength="16" autocomplete="nickname" placeholder="예: 오후의 산책자">
+    <button id="joinButton" type="button">마을에 들어가기</button>
+    <div id="joinError" role="status"></div>
+  </div>
+</div>
+<div id="onlineCount">CONNECTING TO THE VILLAGE…</div>
 <div id="hud">
  <div id="topbar"><div><div class="logo">THE COMMON PLACE</div><div class="subtitle">A LITTLE WORLD FOR EVERYONE</div></div><div id="place">CENTRAL GARDEN<br><span id="timeLabel" style="font-size:10px;opacity:.9">AFTERNOON · 느린 오후</span></div></div>
  <div id="crosshair"></div><div id="prompt">E 키를 눌러 둘러보기</div>
@@ -58,6 +81,23 @@ canvas{display:block;touch-action:none}
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 <script type="module">
 import * as THREE from 'three';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js';
+import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js';
+import { getDatabase, ref, set, onValue, onChildAdded, onChildChanged, onChildRemoved, onDisconnect, remove } from 'https://www.gstatic.com/firebasejs/13.1.0/firebase-database.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD4P3GqB3EIPghIxx3V7Mq7NNSNYVMUsKE",
+  authDomain: "the-common-place.firebaseapp.com",
+  databaseURL: "https://the-common-place-default-rtdb.firebaseio.com",
+  projectId: "the-common-place",
+  storageBucket: "the-common-place.firebasestorage.app",
+  messagingSenderId: "367262587126",
+  appId: "1:367262587126:web:01b1ffb890a086f69734d7"
+};
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+const database = getDatabase(firebaseApp);
+
 const loading=document.getElementById('loading');
 const scene=new THREE.Scene();
 const skyDay=new THREE.Color(0x9fc5d1), skySunset=new THREE.Color(0xc88f9c), skyNight=new THREE.Color(0x25364e), skyDawn=new THREE.Color(0xd9b6a5);
@@ -228,7 +268,141 @@ function loadCards(){try{return JSON.parse(localStorage.getItem('tcp_postcards')
 function renderPostcards(){const wall=document.getElementById('postcardWall');if(!wall)return;wall.innerHTML='<div class="eyebrow" style="margin:18px 0 8px">LETTERS LEFT HERE · 남겨진 엽서</div>';const cards=loadCards();if(!cards.length){const empty=document.createElement('p');empty.textContent='아직 남겨진 엽서가 없어요. 첫 번째 인사를 남겨보세요.';wall.append(empty);return}cards.slice(0,8).forEach(c=>{const el=document.createElement('div');el.className='postcard';const sm=document.createElement('small');sm.textContent=c.design+' · '+c.date+' · '+c.author;const p=document.createElement('p');p.textContent=c.message;el.append(sm,p);wall.append(el)})}
 function closePanel(){panel.classList.remove('show')}
 document.getElementById('close').onclick=closePanel;document.getElementById('panelDone').onclick=closePanel;
+
 const keys={};let yaw=0,dragging=false,lastX=0,lastY=0,pitch=.12;const target=new THREE.Vector3();
+
+// Quiet-coexistence multiplayer: each visitor writes only their own presence record.
+const joinGate=document.getElementById('joinGate');
+const joinButton=document.getElementById('joinButton');
+const nicknameInput=document.getElementById('nicknameInput');
+const joinError=document.getElementById('joinError');
+const onlineCount=document.getElementById('onlineCount');
+let myUid=null, myNickname='', presenceRef=null, lastPresenceWrite=0;
+const remoteVisitors=new Map();
+
+function makeNameSprite(name){
+  const canvas=document.createElement('canvas');
+  canvas.width=512;canvas.height=128;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='rgba(35,52,42,.78)';
+  ctx.beginPath();ctx.roundRect(12,20,488,88,18);ctx.fill();
+  ctx.fillStyle='#fffaf0';ctx.font='36px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(name,256,64,450);
+  const texture=new THREE.CanvasTexture(canvas);
+  const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthWrite:false}));
+  sprite.scale.set(2.4,.6,1);
+  sprite.position.set(0,2.85,0);
+  return sprite;
+}
+function createRemoteVisitor(uid,data){
+  if(uid===myUid)return;
+  if(remoteVisitors.has(uid)){updateRemoteVisitor(uid,data);return}
+  const root=avatar.clone(true);
+  root.position.set(Number(data.x)||0,0,Number(data.z)||0);
+  root.rotation.y=Number(data.rotation)||0;
+  root.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false}});
+  const label=makeNameSprite(String(data.nickname||'산책자').slice(0,16));
+  root.add(label);
+  scene.add(root);
+  remoteVisitors.set(uid,{root,label,targetX:root.position.x,targetZ:root.position.z,targetRotation:root.rotation.y,action:data.action||'walking'});
+  updateRemoteVisitor(uid,data);
+}
+function updateRemoteVisitor(uid,data){
+  const visitor=remoteVisitors.get(uid);
+  if(!visitor)return;
+  visitor.targetX=Number(data.x)||0;
+  visitor.targetZ=Number(data.z)||0;
+  visitor.targetRotation=Number(data.rotation)||0;
+  visitor.action=data.action||'walking';
+  const safeName=String(data.nickname||'산책자').slice(0,16);
+  // Refresh the name tag only when its text changes.
+  if(visitor.nickname!==safeName){
+    visitor.nickname=safeName;
+    visitor.root.remove(visitor.label);
+    visitor.label.material.map.dispose();
+    visitor.label.material.dispose();
+    visitor.label=makeNameSprite(safeName);
+    visitor.root.add(visitor.label);
+  }
+}
+function removeRemoteVisitor(uid){
+  const visitor=remoteVisitors.get(uid);
+  if(!visitor)return;
+  scene.remove(visitor.root);
+  visitor.root.traverse(o=>{
+    if(o.isSprite){if(o.material.map)o.material.map.dispose();o.material.dispose()}
+  });
+  remoteVisitors.delete(uid);
+}
+function updateOnlineCount(){
+  onlineCount.textContent=`${remoteVisitors.size+ (myUid?1:0)} WALKER${remoteVisitors.size===0?'':'S'} IN THE VILLAGE`;
+}
+function presenceData(){
+  return {
+    nickname:myNickname,
+    x:Number(avatar.position.x.toFixed(3)),
+    z:Number(avatar.position.z.toFixed(3)),
+    rotation:Number(avatar.rotation.y.toFixed(3)),
+    action:seated?'sitting':'walking'
+  };
+}
+async function enterVillage(){
+  const nickname=nicknameInput.value.trim().slice(0,16);
+  if(!nickname){joinError.textContent='별명을 한 글자 이상 입력해 줘.';nicknameInput.focus();return}
+  joinButton.disabled=true;
+  joinButton.textContent='입장 준비 중…';
+  joinError.textContent='';
+  try{
+    const credential=await signInAnonymously(auth);
+    myUid=credential.user.uid;
+    myNickname=nickname;
+    presenceRef=ref(database,'presence/'+myUid);
+    await set(presenceRef,presenceData());
+    await onDisconnect(presenceRef).remove();
+
+    const connectedRef=ref(database,'.info/connected');
+    onValue(connectedRef,async snap=>{
+      if(snap.val()===true && myUid){
+        try{
+          await onDisconnect(presenceRef).remove();
+          await set(presenceRef,presenceData());
+        }catch(err){console.warn('Presence reconnect:',err)}
+      }
+    });
+
+    const visitorsRef=ref(database,'presence');
+    onChildAdded(visitorsRef,snap=>{if(snap.key!==myUid)createRemoteVisitor(snap.key,snap.val());updateOnlineCount()});
+    onChildChanged(visitorsRef,snap=>{if(snap.key!==myUid)updateRemoteVisitor(snap.key,snap.val());updateOnlineCount()});
+    onChildRemoved(visitorsRef,snap=>{removeRemoteVisitor(snap.key);updateOnlineCount()});
+
+    joinGate.style.display='none';
+    updateOnlineCount();
+  }catch(err){
+    console.error(err);
+    joinError.textContent='연결하지 못했어요. Firebase 익명 인증과 데이터베이스 규칙을 확인해 주세요.';
+    joinButton.disabled=false;
+    joinButton.textContent='다시 시도하기';
+  }
+}
+joinButton.addEventListener('click',enterVillage);
+nicknameInput.addEventListener('keydown',e=>{if(e.key==='Enter')enterVillage()});
+nicknameInput.value=localStorage.getItem('tcp_nickname')||'';
+joinButton.addEventListener('click',()=>{if(nicknameInput.value.trim())try{localStorage.setItem('tcp_nickname',nicknameInput.value.trim().slice(0,16))}catch(e){}});
+function publishPresence(now){
+  if(!myUid||!presenceRef||now-lastPresenceWrite<120)return;
+  lastPresenceWrite=now;
+  set(presenceRef,presenceData()).catch(err=>console.warn('Presence update failed:',err));
+}
+function smoothRemoteVisitors(){
+  for(const visitor of remoteVisitors.values()){
+    visitor.root.position.x=THREE.MathUtils.lerp(visitor.root.position.x,visitor.targetX,.24);
+    visitor.root.position.z=THREE.MathUtils.lerp(visitor.root.position.z,visitor.targetZ,.24);
+    let delta=visitor.targetRotation-visitor.root.rotation.y;
+    delta=Math.atan2(Math.sin(delta),Math.cos(delta));
+    visitor.root.rotation.y+=delta*.24;
+  }
+}
+
 window.addEventListener('keydown',e=>{
  const k=e.key.toLowerCase();
  if(k==='e'&&!e.repeat&&!panel.classList.contains('show')){
@@ -274,7 +448,8 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
  ducks.forEach((d,i)=>{const a=elapsed*1.4+d.phase;d.g.position.x=17+Math.cos(a)*(1.8+i*.2);d.g.position.z=-10+Math.sin(a)*(1.5+i*.18);d.g.rotation.y=-a+Math.PI/2;d.g.position.y=.18+Math.sin(elapsed*14+d.phase)*.025});
  const forward=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0),side=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),moving=forward!==0||side!==0;
  if(moving&&!seated&&!panel.classList.contains('show')){const len=Math.hypot(forward,side),f=forward/len,s=side/len,dx=(-Math.sin(yaw)*f+Math.cos(yaw)*s)*5*dt,dz=(-Math.cos(yaw)*f-Math.sin(yaw)*s)*5*dt;avatar.position.x=THREE.MathUtils.clamp(avatar.position.x+dx,-52,52);avatar.position.z=THREE.MathUtils.clamp(avatar.position.z+dz,-52,52);avatar.rotation.y=Math.atan2(dx,dz);walk+=dt*10;avatar.position.y=Math.abs(Math.sin(walk))*.035}
- const b=seated?null:nearbyBench(),p=nearby();
+ publishPresence(performance.now());smoothRemoteVisitors();
+  const b=seated?null:nearbyBench(),p=nearby();
  const prompt=document.getElementById('prompt');
  prompt.style.opacity=(seated||b||p)?'1':'0';
  if(seated)prompt.textContent='E 키를 눌러 일어서기';
